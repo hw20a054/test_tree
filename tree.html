@@ -1,0 +1,684 @@
+<html>
+
+<head>
+    <title>three.js + ar.js</title>
+    <meta name="viewport" content="width=device-width, viewport-fit=cover, shrink-to-fit=no" />
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+        }
+
+        .wrapper {
+            position: relative;
+            overflow: hidden;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="wrapper">
+        <canvas></canvas>
+    </div>
+    <!--❶ three.jsとAR.jsを読み込む-->
+    <script src="https://unpkg.com/three@0.127.0/build/three.min.js"></script>
+    <script src="https://raw.githack.com/AR-js-org/AR.js/3.3.3/three.js/build/ar.js"></script>
+    <script async>
+        const renderer = new THREE.WebGLRenderer({
+            canvas: document.querySelector('canvas'),
+            antialias: true,
+            alpha: true
+        });
+        const camera = new THREE.PerspectiveCamera();
+        const scene = new THREE.Scene();
+        const markerRoot = new THREE.Group();
+        const arToolkitContext = new THREEx.ArToolkitContext({
+            cameraParametersUrl: './camera.dat', // ❷ camera.datを読み込む
+            detectionMode: 'mono'
+        });
+        const arToolkitSource = new THREEx.ArToolkitSource({
+            sourceType: 'webcam'
+        });
+        const arMarkerControl = new THREEx.ArMarkerControls(arToolkitContext, markerRoot, {
+            type: 'pattern',
+            patternUrl: 'pattern.patt' // ❸ pattern.pattを読み込む
+        });
+
+        renderer.setSize(window.innerWidth, window.innerHeight);
+
+        window.addEventListener('resize', handleResize, {
+            passive: true
+        });
+
+        arToolkitContext.init(() => {
+            camera.projectionMatrix.copy(arToolkitContext.getProjectionMatrix());
+        });
+
+        arToolkitSource.init(() => {
+            document.querySelector('.wrapper').appendChild(arToolkitSource.domElement); // ❹ videoタグを.wrapper配下に移動させる
+            setTimeout(handleResize, 400); // ❺ リサイズイベントを一度発火させる
+        });
+
+        scene.add(markerRoot);
+
+        const directionalLight = new THREE.DirectionalLight(0xFFFFFF);
+        directionalLight.position.set(1, 0, 1);
+        scene.add(directionalLight);
+
+
+        const atari_geometry = new THREE.BoxGeometry(0.1, 0.1, 0.1);
+        const atari_material = new THREE.MeshBasicMaterial({ color: 0xff0000 });
+        atari_material.opacity = 0;
+        atari_material.transparent = true;
+        const atari = new THREE.Mesh(atari_geometry, atari_material);
+        atari.position.set(0, 0, 0);
+        markerRoot.add(atari);
+
+
+        function createuzumaki() {
+            class CustomSinCurve extends THREE.Curve {
+
+                constructor(scale = 1) {
+                    super();
+                    this.scale = scale;
+                }
+
+                getPoint(t, optionalTarget = new THREE.Vector3()) {
+
+                    const tx = Math.sin(4 * Math.PI * t) * 0.08 * (t * 0.1);
+                    const ty = 0;
+                    const tz = Math.cos(4 * Math.PI * t) * 0.08 * (t * 0.1);
+
+                    return optionalTarget.set(tx, ty, tz).multiplyScalar(this.scale);
+                }
+            }
+            const path = new CustomSinCurve(20);
+            const geometry = new THREE.TubeGeometry(path, 100, 0.015, 36, false);
+            const material = new THREE.MeshBasicMaterial({ color: 0xcd853f });
+            material.wireframe = true;
+            const mesh = new THREE.Mesh(geometry, material);
+            return mesh;
+        }
+
+        function createuzumaki(r, k) {
+            class CustomSinCurve extends THREE.Curve {
+
+                constructor(scale = 1) {
+                    super();
+                    this.scale = scale;
+                }
+
+                getPoint(t, optionalTarget = new THREE.Vector3()) {
+
+                    const tx = Math.sin(4 * Math.PI * t) * r * (t * 0.1);
+                    const ty = 0;
+                    const tz = Math.cos(4 * Math.PI * t) * r * (t * 0.1);
+
+                    return optionalTarget.set(tx, ty, tz).multiplyScalar(this.scale);
+                }
+            }
+            const path = new CustomSinCurve(k);
+            const geometry = new THREE.TubeGeometry(path, 100, 0.015, 36, false);
+            const material = new THREE.MeshBasicMaterial({ color: 0xcd853f });
+            material.wireframe = true;
+            const mesh = new THREE.Mesh(geometry, material);
+            return mesh;
+        }
+
+        function createeda(l, k) {
+            class CustomSinCurve1 extends THREE.Curve {
+
+                constructor(scale = 1) {
+                    super();
+                    this.scale = scale;
+                }
+
+                getPoint(t, optionalTarget = new THREE.Vector3()) {
+
+                    const tx = Math.sin(Math.PI * t) * 0.06;
+                    const ty = 0;
+                    const tz = t * k;
+
+                    return optionalTarget.set(tx, ty, tz).multiplyScalar(this.scale);
+                }
+            }
+            const path = new CustomSinCurve1(l);
+            const geometry = new THREE.TubeGeometry(path, 100, 0.015, 36, false);
+            const material = new THREE.MeshBasicMaterial({ color: 0xcd853f });
+            material.wireframe = true;
+            const mesh = new THREE.Mesh(geometry, material);
+            return mesh;
+        }
+
+        function createedaw(l) {
+            class CustomSinCurve1 extends THREE.Curve {
+
+                constructor(scale = 1) {
+                    super();
+                    this.scale = scale;
+                }
+
+                getPoint(t, optionalTarget = new THREE.Vector3()) {
+
+                    const tx = t * 0.1;
+                    const ty = 0;
+                    const tz = Math.sin(1.5 * Math.PI * t) * 0.01;
+
+                    return optionalTarget.set(tx, ty, tz).multiplyScalar(this.scale);
+                }
+            }
+            const path = new CustomSinCurve1(l);
+            const geometry = new THREE.TubeGeometry(path, 100, 0.015, 36, false);
+            const material = new THREE.MeshBasicMaterial({ color: 0xcd853f });
+            material.wireframe = true;
+            const mesh = new THREE.Mesh(geometry, material);
+            return mesh;
+        }
+
+        function createedal(l, k) {
+            class CustomSinCurve1 extends THREE.Curve {
+
+                constructor(scale = 1) {
+                    super();
+                    this.scale = scale;
+                }
+
+                getPoint(t, optionalTarget = new THREE.Vector3()) {
+
+                    const tx = Math.sin(Math.PI * t) * 0.04;
+                    const ty = 0;
+                    const tz = t * k;
+
+                    return optionalTarget.set(tx, ty, tz).multiplyScalar(this.scale);
+                }
+            }
+            const path = new CustomSinCurve1(l);
+            const geometry = new THREE.TubeGeometry(path, 100, 0.015, 36, false);
+            const material = new THREE.MeshBasicMaterial({ color: 0xcd853f });
+            material.wireframe = true;
+            const mesh = new THREE.Mesh(geometry, material);
+            return mesh;
+        }
+
+        function createreefB() {
+            var colorary = [0xffffff, 0xfffaf0, 0xffefd5, 0xffe4b5, 0xffe4e1, 0xfdf5e6, 0xf0ffff, 0xb0c4de, 0x4169e1, 0x0000cd, 0x00bfff, 0x87ceeb, 0xafeeee, 0x00ffff, 0x00ced1, 0x008b8b, 0x008000, 0x3cb371, 0x7fffd4, 0x00ff7f, 0x7fff00, 0x00ff00, 0x6b8e23, 0xeee8aa, 0xffffe0, 0xf5deb3, 0xd2b48c, 0xffff00, 0xffa500, 0xff8c00, 0xd2691e, 0x800000, 0xb22222, 0xe9967a, 0xfa8072, 0xff6347, 0xff0000, 0xff1493, 0xffb6c1, 0xff00ff, 0xda70d6, 0x9400d3, 0x800080, 0x8a2be2, 0x7b68ee];
+            var colorcode = Math.floor(Math.random() * (colorary.length - 3));
+            const reef_geometry = new THREE.CylinderGeometry(0.15, 0.15, 0.03, 360);
+            const reef_material = new THREE.MeshBasicMaterial({ color: colorary[colorcode] });
+            const reef = new THREE.Mesh(reef_geometry, reef_material);
+            const reef1_geometry = new THREE.CylinderGeometry(0.12, 0.12, 0.02, 360);
+            const reef1_material = new THREE.MeshBasicMaterial({ color: colorary[colorcode + 1] });
+            const reef1 = new THREE.Mesh(reef1_geometry, reef1_material);
+            reef.add(reef1);
+            reef1.position.y += 0.015;
+            const reef2_geometry = new THREE.CylinderGeometry(0.09, 0.09, 0.01, 360);
+            const reef2_material = new THREE.MeshBasicMaterial({ color: colorary[colorcode + 2] });
+            const reef2 = new THREE.Mesh(reef2_geometry, reef2_material);
+            reef2.position.y += 0.015;
+            reef1.add(reef2);
+            return reef;
+        }
+
+        function createreef() {
+            var colorary = [0xffffff, 0xfffaf0, 0xffefd5, 0xffe4b5, 0xffe4e1, 0xfdf5e6, 0xf0ffff, 0xb0c4de, 0x4169e1, 0x0000cd, 0x00bfff, 0x87ceeb, 0xafeeee, 0x00ffff, 0x00ced1, 0x008b8b, 0x008000, 0x3cb371, 0x7fffd4, 0x00ff7f, 0x7fff00, 0x00ff00, 0x6b8e23, 0xeee8aa, 0xffffe0, 0xf5deb3, 0xd2b48c, 0xffff00, 0xffa500, 0xff8c00, 0xd2691e, 0x800000, 0xb22222, 0xe9967a, 0xfa8072, 0xff6347, 0xff0000, 0xff1493, 0xffb6c1, 0xff00ff, 0xda70d6, 0x9400d3, 0x800080, 0x8a2be2, 0x7b68ee];
+            var colorcode = Math.floor(Math.random() * (colorary.length - 3));
+            const reef_geometry = new THREE.CylinderGeometry(0.10, 0.10, 0.03, 360);
+            const reef_material = new THREE.MeshBasicMaterial({ color: colorary[colorcode] });
+            const reef = new THREE.Mesh(reef_geometry, reef_material);
+            const reef1_geometry = new THREE.CylinderGeometry(0.07, 0.07, 0.02, 360);
+            const reef1_material = new THREE.MeshBasicMaterial({ color: colorary[colorcode + 1] });
+            const reef1 = new THREE.Mesh(reef1_geometry, reef1_material);
+            reef.add(reef1);
+            reef1.position.y += 0.015;
+            const reef2_geometry = new THREE.CylinderGeometry(0.04, 0.04, 0.01, 360);
+            const reef2_material = new THREE.MeshBasicMaterial({ color: colorary[colorcode + 2] });
+            const reef2 = new THREE.Mesh(reef2_geometry, reef2_material);
+            reef2.position.y += 0.015;
+            reef1.add(reef2);
+            return reef;
+        }
+
+        const uzumaki1 = createuzumaki(0.08, 20);
+        uzumaki1.rotation.x += Math.PI;
+        uzumaki1.rotation.y += Math.PI / 180 * 60;
+        const eda1 = createeda(6, 0.2);
+        eda1.rotation.y += Math.PI / 180 * 20;
+        atari.add(eda1);
+        eda1.add(uzumaki1);
+        uzumaki1.position.x += -0.14;
+        uzumaki1.position.z += 0.08;
+        eda1.rotation.y += Math.PI / 180 * 20;
+        eda1.position.x += -0.9;
+        eda1.position.z += -0.5;
+        const uzumaki2 = createuzumaki(0.08, 20);
+        const eda2 = createedaw(7);
+        eda2.rotation.y -= Math.PI / 180 * 35;
+        eda2.position.x += -1.0;
+        eda2.position.z += -0.73;
+        atari.add(eda2);
+        eda2.add(uzumaki2);
+        uzumaki2.rotation.y -= Math.PI / 180 * 20;
+        uzumaki2.position.x += 0.06;
+        uzumaki2.position.z -= 0.15;
+        const eda3 = createedal(6.5, 0.3);
+        eda3.rotation.y += Math.PI / 180 * 20;
+        atari.add(eda3);
+        eda3.position.x += -0.76;
+        eda3.position.z += -1.41;
+        const uzumaki3 = createuzumaki(0.08, 20);
+        eda3.add(uzumaki3);
+        uzumaki3.rotation.x += Math.PI;
+        uzumaki3.rotation.y += Math.PI / 180 * 70;
+        uzumaki3.position.x += -0.15;
+        uzumaki3.position.z += 0.06;
+        const eda4 = createedaw(5);
+        eda4.rotation.y += Math.PI / 180 * 20;
+        atari.add(eda4);
+        eda4.rotation.y -= Math.PI / 180 * 95;
+        eda4.position.z -= 1.3;
+        eda4.position.x -= 0.48;
+        const uzumaki4 = createuzumaki(0.08, 20);
+        eda4.add(uzumaki4);
+        uzumaki4.rotation.y -= Math.PI / 180 * 15;
+        uzumaki4.position.x += 0.09;
+        uzumaki4.position.z += -0.13;
+        const eda5 = createedal(5.5, 0.45);
+        eda5.rotation.y += Math.PI / 180 * 10;
+        eda5.position.x += -0.5;
+        eda5.position.z += -2.02;
+        atari.add(eda5);
+        const uzumaki5 = createuzumaki(0.08, 26);
+        eda5.add(uzumaki5);
+        uzumaki5.rotation.z -= Math.PI;
+        uzumaki5.rotation.y += Math.PI / 180 * 95;
+        uzumaki5.position.x -= 0.202;
+        uzumaki5.position.z += 0.04;
+        const eda6 = createedaw(12);
+        eda6.rotation.y -= Math.PI / 180 * 85;
+        eda6.rotation.x += Math.PI;
+        eda6.position.z += -1;
+        eda6.position.x += -0.098;
+        atari.add(eda6);
+        const uzumaki6 = createuzumaki(0.08, 27);
+        uzumaki6.rotation.x += Math.PI;
+        uzumaki6.rotation.y += Math.PI / 180 * 183;
+        uzumaki6.position.x += 1.2;
+        uzumaki6.position.z -= 0.338;
+        eda6.add(uzumaki6);
+        const eda7 = createeda(6, 0.3);
+        eda7.rotation.y += Math.PI / 180 * 140;
+        eda7.position.z += -0.2;
+        eda7.position.x += -0.02;
+        atari.add(eda7);
+        const uzumaki7 = createuzumaki(0.08, 27);
+        uzumaki7.rotation.x += Math.PI;
+        uzumaki7.rotation.y += Math.PI / 180 * 183;
+        uzumaki7.position.x += 1.2;
+        uzumaki7.position.z -= 0.338;
+        eda7.add(uzumaki7);
+        const uzumaki8 = createuzumaki(0.08, 27);
+        uzumaki8.rotation.x += Math.PI;
+        uzumaki8.rotation.y += Math.PI / 180 * 280;
+        uzumaki8.position.x += 0.38;
+        uzumaki8.position.z += 1.56;
+        eda7.add(uzumaki8);
+        const uzumaki9 = createuzumaki(0.08, 27);
+        uzumaki9.rotation.y += Math.PI / 180 * 70;
+        uzumaki9.position.x += -0.2;
+        uzumaki9.position.z += 1.72;
+        eda7.add(uzumaki9);
+        const uzumaki10 = createuzumaki(0.09, 27);
+        uzumaki10.rotation.y += Math.PI / 180 * 215;
+        uzumaki10.position.z += 1.;
+        uzumaki10.position.x += 0.5;
+        eda7.add(uzumaki10);
+        const uzumaki11 = createuzumaki(0.08, 27);
+        uzumaki11.rotation.y += Math.PI / 180 * 10;
+        uzumaki11.position.z += 0.1;
+        uzumaki11.position.x += 0.38;
+        eda5.add(uzumaki11);
+        const eda8 = createeda(4.5, 0.32);
+        eda8.rotation.y += Math.PI / 180 * 145;
+        eda8.position.z += 0.42;
+        eda8.position.x -= 0.05;
+        atari.add(eda8);
+        const uzumaki12 = createuzumaki(0.08, 27);
+        uzumaki12.rotation.x += Math.PI;
+        uzumaki12.rotation.y -= Math.PI / 180 * 50;
+        uzumaki12.position.x += 0.18;
+        uzumaki12.position.z += 1.55;
+        eda8.add(uzumaki12);
+        const eda9 = createeda(2.5, 0.35);
+        eda9.rotation.y += Math.PI / 180 * 145;
+        eda9.position.z += 0.42;
+        eda9.position.x -= 0.05;
+        atari.add(eda9);
+        const eda10 = createeda(1.5, 0.3);
+        eda10.rotation.y -= Math.PI / 180 * 55;
+        eda10.position.z += 0.758;
+        eda10.position.x += 0.058;
+        eda9.add(eda10);
+        const uzumaki13 = createuzumaki(0.08, 23);
+        uzumaki13.rotation.y += Math.PI / 180 * 65;
+        uzumaki13.position.x -= 0.145;
+        uzumaki13.position.z += 0.34;
+        eda10.add(uzumaki13);
+        const uzumaki14 = createuzumaki(0.08, 26);
+        uzumaki14.rotation.y += Math.PI / 180 * 200;
+        uzumaki14.position.x += 0.155;
+        uzumaki14.position.z += 0.44;
+        eda10.add(uzumaki14);
+
+        const reef1 = createreefB();
+        markerRoot.add(reef1);
+        reef1.position.x += -0.5;
+        reef1.position.z += -0.28;
+        const reef2 = createreefB();
+        markerRoot.add(reef2);
+        reef2.position.x += -0.6;
+        reef2.position.z += -0.63;
+        const reef3 = createreefB();
+        markerRoot.add(reef3);
+        reef3.position.x += -0.6;
+        reef3.position.z += -1;
+        const reef4 = createreefB();
+        markerRoot.add(reef4);
+        reef4.position.x += -0.5;
+        reef4.position.z += -1.5;
+        const reef5 = createreefB();
+        markerRoot.add(reef5);
+        reef5.position.x += -1.0;
+        reef5.position.z += -2.0;
+        const reef6 = createreefB();
+        markerRoot.add(reef6);
+        reef6.position.x += -0.4;
+        reef6.position.z += -2.15;
+        const reef7 = createreefB();
+        markerRoot.add(reef7);
+        reef7.position.x += 0.15;
+        reef7.position.z += -1.8;
+        const reef8 = createreefB();
+        markerRoot.add(reef8);
+        reef8.position.x += 0.4;
+        reef8.position.z += -1.6;
+        const reef9 = createreefB();
+        markerRoot.add(reef9);
+        reef9.position.x += 1.05;
+        reef9.position.z += -1.725;
+        const reef10 = createreefB();
+        markerRoot.add(reef10);
+        reef10.position.x += 0.9;
+        reef10.position.z += -1.3;
+        const reef11 = createreefB();
+        markerRoot.add(reef11);
+        reef11.position.x += 0.95;
+        reef11.position.z += -0.7;
+        const reef12 = createreefB();
+        markerRoot.add(reef12);
+        reef12.position.x += 0.3;
+        reef12.position.z += -0.05;
+        const reef13 = createreefB();
+        markerRoot.add(reef13);
+        reef13.position.x += 0.4;
+        reef13.position.z += -0.8;
+
+        const reef14 = createreef();
+        markerRoot.add(reef14);
+        reef14.position.x += -0.4;
+        reef14.position.z += -0.01;
+        const reef15 = createreef();
+        markerRoot.add(reef15);
+        reef15.position.x += -0.28;
+        reef15.position.z += -0.17;
+        const reef16 = createreef();
+        markerRoot.add(reef16);
+        reef16.position.x += -0.8;
+        reef16.position.z += -0.17;
+        const reef17 = createreef();
+        markerRoot.add(reef17);
+        reef17.position.x += -1.3;
+        reef17.position.z += -0.3;
+        const reef18 = createreef();
+        markerRoot.add(reef18);
+        reef18.position.x += -1.2;
+        reef18.position.z += -0.45;
+        const reef19 = createreef();
+        markerRoot.add(reef19);
+        reef19.position.x += -1.45;
+        reef19.position.z += -0.6;
+        const reef20 = createreef();
+        markerRoot.add(reef20);
+        reef20.position.x += -1.5;
+        reef20.position.z += -0.9;
+        const reef21 = createreef();
+        markerRoot.add(reef21);
+        reef21.position.x += -1.3;
+        reef21.position.z += -1.00;
+        const reef22 = createreef();
+        markerRoot.add(reef22);
+        reef22.position.x += -1.1;
+        reef22.position.z += -1.01;
+        const reef23 = createreef();
+        markerRoot.add(reef23);
+        reef23.position.x += -0.85;
+        reef23.position.z += -1.1;
+        const reef24 = createreef();
+        markerRoot.add(reef24);
+        reef24.position.x += -0.4;
+        reef24.position.z += -0.8;
+        const reef25 = createreef();
+        markerRoot.add(reef25);
+        reef25.position.x += -0.3;
+        reef25.position.z += -0.6;
+        const reef26 = createreef();
+        markerRoot.add(reef26);
+        reef26.position.x += -1.1;
+        reef26.position.z += -1.4;
+        const reef27 = createreef();
+        markerRoot.add(reef27);
+        reef27.position.x += -1.3;
+        reef27.position.z += -1.2;
+        const reef28 = createreef();
+        markerRoot.add(reef28);
+        reef28.position.x += -0.7;
+        reef28.position.z += -1.7;
+        const reef29 = createreef();
+        markerRoot.add(reef29);
+        reef29.position.x += -0.9;
+        reef29.position.z += -1.6;
+        const reef30 = createreef();
+        markerRoot.add(reef30);
+        reef30.position.x += -0.2;
+        reef30.position.z += -0.9;
+        const reef31 = createreef();
+        markerRoot.add(reef31);
+        reef31.position.x += -1.2;
+        reef31.position.z += -1.85;
+        const reef32 = createreef();
+        markerRoot.add(reef32);
+        reef32.position.x += -1.0;
+        reef32.position.z += -2.25;
+        const reef33 = createreef();
+        markerRoot.add(reef33);
+        reef33.position.x += -0.79;
+        reef33.position.z += -2.24;
+        const reef34 = createreef();
+        markerRoot.add(reef34);
+        reef34.position.x += -0.6;
+        reef34.position.z += -2.3;
+        const reef35 = createreef();
+        markerRoot.add(reef35);
+        reef35.position.x += -0.01;
+        reef35.position.z += -2.25;
+        const reef36 = createreef();
+        markerRoot.add(reef36);
+        reef36.position.x += 0.13;
+        reef36.position.z += -2.4;
+        const reef37 = createreef();
+        markerRoot.add(reef37);
+        reef37.position.x += -0.25;
+        reef37.position.z += -2.4;
+        const reef38 = createreef();
+        markerRoot.add(reef38);
+        reef38.position.x += 0.6;
+        reef38.position.z += -2.3;
+        const reef39 = createreef();
+        markerRoot.add(reef39);
+        reef39.position.x += 0.45;
+        reef39.position.z += -2.45;
+        const reef40 = createreef();
+        markerRoot.add(reef40);
+        reef40.position.x += 0.65;
+        reef40.position.z += -2.55;
+        const reef41 = createreef();
+        markerRoot.add(reef41);
+        reef41.position.x += 0.4;
+        reef41.position.z += -1.93;
+        const reef42 = createreef();
+        markerRoot.add(reef42);
+        reef42.position.x += 0.8;
+        reef42.position.z += -1.94;
+        const reef43 = createreef();
+        markerRoot.add(reef43);
+        reef43.position.x += 0.6;
+        reef43.position.z += -2.09;
+        const reef44 = createreef();
+        markerRoot.add(reef44);
+        reef44.position.x += 0;
+        reef44.position.z += -1.6;
+        const reef45 = createreef();
+        markerRoot.add(reef45);
+        reef45.position.x += -0.06;
+        reef45.position.z += -1.4;
+        const reef46 = createreef();
+        markerRoot.add(reef46);
+        reef46.position.x += 0.05;
+        reef46.position.z += -1.0;
+        const reef47 = createreef();
+        markerRoot.add(reef47);
+        reef47.position.x += 0.4;
+        reef47.position.z += -1.06;
+        const reef48 = createreef();
+        markerRoot.add(reef48);
+        reef48.position.x += 0.15;
+        reef48.position.z += -0.55;
+        const reef49 = createreef();
+        markerRoot.add(reef49);
+        reef49.position.x += 0.65;
+        reef49.position.z += -1.26;
+        const reef50 = createreef();
+        markerRoot.add(reef50);
+        reef50.position.x += 1.;
+        reef50.position.z += -0.94;
+        const reef51 = createreef();
+        markerRoot.add(reef51);
+        reef51.position.x += 1.3;
+        reef51.position.z += -1.11;
+        const reef52 = createreef();
+        markerRoot.add(reef52);
+        reef52.position.x += 1.55;
+        reef52.position.z += -1.35;
+        const reef53 = createreef();
+        markerRoot.add(reef53);
+        reef53.position.x += 1.35;
+        reef53.position.z += -1.68;
+        const reef54 = createreef();
+        markerRoot.add(reef54);
+        reef54.position.x += 1.6;
+        reef54.position.z += -1.83;
+        const reef55 = createreef();
+        markerRoot.add(reef55);
+        reef55.position.x += 1.25;
+        reef55.position.z += -1.88;
+        const reef56 = createreef();
+        markerRoot.add(reef56);
+        reef56.position.x += 1.05;
+        reef56.position.z += -1.98;
+        const reef57 = createreef();
+        markerRoot.add(reef57);
+        reef57.position.x += 0.6;
+        reef57.position.z += -1.9;
+        const reef58 = createreef();
+        markerRoot.add(reef58);
+        reef58.position.x += 1.53;
+        reef58.position.z += -1.6;
+        const reef59 = createreef();
+        markerRoot.add(reef59);
+        reef59.position.x += 1.5;
+        reef59.position.z += -1.1;
+        const reef60 = createreef();
+        markerRoot.add(reef60);
+        reef60.position.x += 1.2;
+        reef60.position.z += -0.9;
+        const reef61 = createreef();
+        markerRoot.add(reef61);
+        reef61.position.x += 1.2;
+        reef61.position.z += -0.6;
+        const reef62 = createreef();
+        markerRoot.add(reef62);
+        reef62.position.x += 1.05;
+        reef62.position.z += -0.4;
+        const reef63 = createreef();
+        markerRoot.add(reef63);
+        reef63.position.x += 0.47;
+        reef63.position.z += -0.48;
+        const reef64 = createreef();
+        markerRoot.add(reef64);
+        reef64.position.x += 0.27;
+        reef64.position.z += -0.32;
+        const reef65 = createreef();
+        markerRoot.add(reef65);
+        reef65.position.x += 0.95;
+        reef65.position.z += -0.2;
+        const reef66 = createreef();
+        markerRoot.add(reef66);
+        reef66.position.x += 0.75;
+        reef66.position.z += 0.2;
+        const reef67 = createreef();
+        markerRoot.add(reef67);
+        reef67.position.x += 0.50;
+        reef67.position.z += 0.1;
+        const reef68 = createreef();
+        markerRoot.add(reef68);
+        reef68.position.x += 0.95;
+        reef68.position.z += 0.4;
+        const reef69 = createreef();
+        markerRoot.add(reef69);
+        reef69.position.x += 0.9;
+        reef69.position.z += 0.05;
+        const reef70 = createreef();
+        markerRoot.add(reef70);
+        reef70.position.x += 1.35;
+        reef70.position.z += 0.25;
+
+
+
+
+
+        function animate() {
+            requestAnimationFrame(animate);
+
+            renderer.render(scene, camera);
+        }
+        animate();
+
+        renderer.setAnimationLoop((delta) => {
+            if (arToolkitSource.ready) {
+                arToolkitContext.update(arToolkitSource.domElement);
+            }
+
+            renderer.render(scene, camera);
+        });
+
+        function handleResize() {
+            if (arToolkitSource.ready) {
+                arToolkitSource.onResize();
+                arToolkitSource.copySizeTo(renderer.domElement);
+            }
+
+            renderer.setPixelRatio(window.devicePixelRatio);
+        }
+    </script>
+</body>
+
+</html>
